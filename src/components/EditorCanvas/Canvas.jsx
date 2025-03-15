@@ -543,6 +543,36 @@ export default function Canvas() {
           console.log("Applied config:", config);
         }
       }
+      if (event.origin === "https://dev.campscholar.org") {
+        const { sql, config } = event.data;
+
+        if (sql) {
+          try {
+            const jsonData = fromDBML(sql, "mssql");
+            setTables(jsonData.tables || []);
+            setRelationships(jsonData.relationships || []);
+            setEnums(jsonData.enums || []);
+            console.log("Received and rendered SQL data:", jsonData);
+          } catch (error) {
+            console.error("Error parsing SQL from parent:", error);
+          }
+        }
+
+        if (config) {
+          setSettings((prev) => ({
+            ...prev,
+            mode: config.darkMode ? "dark" : "light",
+          }));
+          if (config.darkMode !== undefined) {
+            document.body.setAttribute(
+              "theme-mode",
+              config.darkMode ? "dark" : "light",
+            );
+            localStorage.setItem("theme", config.darkMode ? "dark" : "light");
+          }
+          console.log("Applied config:", config);
+        }
+      }
     };
 
     window.addEventListener("message", handleMessage);

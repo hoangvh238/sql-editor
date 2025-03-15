@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect} from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Action,
   Cardinality,
@@ -39,11 +39,22 @@ export default function Canvas() {
     pointer,
   } = canvasContextValue;
 
-  const { tables,setTables,enums,types,setEnums, setSettings ,setRelationships, updateTable, relationships, addRelationship, database } =
-    useDiagram();
+  const {
+    tables,
+    setTables,
+    enums,
+    types,
+    setEnums,
+    setSettings,
+    setRelationships,
+    updateTable,
+    relationships,
+    addRelationship,
+    database,
+  } = useDiagram();
 
-    const [exportType, setExportType] = useState(null); 
-const [isExporting, setIsExporting] = useState(false);
+  const [exportType, setExportType] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { areas, updateArea } = useAreas();
   const { notes, updateNote } = useNotes();
@@ -505,10 +516,9 @@ const [isExporting, setIsExporting] = useState(false);
       if (event.origin === "http://localhost:3000") {
         const { sql, config } = event.data;
 
-        // Xử lý SQL nếu có
         if (sql) {
           try {
-            const jsonData = fromDBML(sql, "mssql"); // Giả định MSSQL, có thể thay đổi
+            const jsonData = fromDBML(sql, "mssql");
             setTables(jsonData.tables || []);
             setRelationships(jsonData.relationships || []);
             setEnums(jsonData.enums || []);
@@ -518,16 +528,16 @@ const [isExporting, setIsExporting] = useState(false);
           }
         }
 
-        // Áp dụng cấu hình giao diện nếu có
         if (config) {
           setSettings((prev) => ({
             ...prev,
-            mode: config.darkMode ? "dark" : "light", // Áp dụng darkMode
-            // Các thuộc tính khác như showLineNumbers, autoFormat có thể cần thêm vào SettingsContext
+            mode: config.darkMode ? "dark" : "light",
           }));
-          // Lưu darkMode vào localStorage nếu cần
           if (config.darkMode !== undefined) {
-            document.body.setAttribute("theme-mode", config.darkMode ? "dark" : "light");
+            document.body.setAttribute(
+              "theme-mode",
+              config.darkMode ? "dark" : "light",
+            );
             localStorage.setItem("theme", config.darkMode ? "dark" : "light");
           }
           console.log("Applied config:", config);
@@ -546,24 +556,52 @@ const [isExporting, setIsExporting] = useState(false);
     types: types || [],
     database: database || "default",
   });
-  
+
   /**
    * Trigger Export after confirming latest state.
    */
   useEffect(() => {
     if (!isExporting) return;
-  
+
     const diagram = prepareDiagramData();
     console.log("Exporting Diagram Data:", diagram);
-  
+
     try {
       if (exportType === "mssql") {
         const sql = exportSQL(diagram);
-        window.parent.postMessage({ type: "mssql", payload: sql }, "http://localhost:3000");
+
+        // Send to all environments
+        window.parent.postMessage(
+          { type: "mssql", payload: sql },
+          "http://localhost:3000",
+        );
+        window.parent.postMessage(
+          { type: "mssql", payload: sql },
+          "https://dev.campscholar.org",
+        );
+        window.parent.postMessage(
+          { type: "mssql", payload: sql },
+          "https://campscholar.org",
+        );
+
         console.log("SQL Exported Successfully:", sql);
       } else if (exportType === "dbml") {
         const dbml = toDBML(diagram);
-        window.parent.postMessage({ type: "dbml", payload: dbml }, "http://localhost:3000");
+
+        // Send to all environments
+        window.parent.postMessage(
+          { type: "dbml", payload: dbml },
+          "http://localhost:3000",
+        );
+        window.parent.postMessage(
+          { type: "dbml", payload: dbml },
+          "https://dev.campscholar.org",
+        );
+        window.parent.postMessage(
+          { type: "dbml", payload: dbml },
+          "https://campscholar.org",
+        );
+
         console.log("DBML Exported Successfully:", dbml);
       }
     } catch (error) {
@@ -573,7 +611,7 @@ const [isExporting, setIsExporting] = useState(false);
       setExportType(null);
     }
   }, [isExporting, exportType, tables, relationships, enums, types, database]);
-  
+
   /**
    * Request to Export DBML.
    */
@@ -581,7 +619,7 @@ const [isExporting, setIsExporting] = useState(false);
     setExportType("dbml");
     setIsExporting(true);
   };
-  
+
   /**
    * Request to Export MSSQL.
    */
@@ -589,14 +627,20 @@ const [isExporting, setIsExporting] = useState(false);
     setExportType("mssql");
     setIsExporting(true);
   };
-  
+
   /**
    * Listen for Export Requests from Parent Window.
    */
   useEffect(() => {
     const handleMessage = (event) => {
-      if (event.origin !== "http://localhost:3000") return; // Validate parent origin
-  
+      if (
+        event.origin !== "http://localhost:3000" &&
+        event.origin !== "https://dev.campscholar.org" &&
+        event.origin !== "https://campscholar.org"
+      ) {
+        return; // Validate parent origin
+      }
+
       const { request } = event.data;
       if (request === "dbml") {
         requestDBMLExport();
@@ -604,7 +648,7 @@ const [isExporting, setIsExporting] = useState(false);
         requestMSSQLExport();
       }
     };
-  
+
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);

@@ -1107,24 +1107,6 @@ export default function ControlPanel({
               <IconAddNote />
             </button>
           </Tooltip>
-          <Divider layout="vertical" margin="8px" />
-          <Tooltip content={t("save")} position="bottom">
-            <button
-              className="py-1 px-2 hover-2 rounded flex items-center"
-              onClick={save}
-            >
-              <IconSaveStroked size="extra-large" />
-            </button>
-          </Tooltip>
-          <Tooltip content={t("to_do")} position="bottom">
-            <button
-              className="py-1 px-2 hover-2 rounded text-xl -mt-0.5"
-              onClick={() => setSidesheet(SIDESHEET.TODO)}
-            >
-              <i className="fa-regular fa-calendar-check" />
-            </button>
-          </Tooltip>
-          <Divider layout="vertical" margin="8px" />
           <Tooltip content={t("theme")} position="bottom">
             <button
               className="py-1 px-2 hover-2 rounded text-xl -mt-0.5"
@@ -1301,17 +1283,6 @@ export default function ControlPanel({
                   </Dropdown>
                 ))}
               </div>
-              <Button
-                size="small"
-                type="tertiary"
-                icon={
-                  saveState === State.LOADING || saveState === State.SAVING ? (
-                    <Spin size="small" />
-                  ) : null
-                }
-              >
-                {getState()}
-              </Button>
             </div>
           </div>
         </div>
